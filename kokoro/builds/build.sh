@@ -97,7 +97,7 @@ if [ -n "$1" ]; then
     echo    " Aborting the build..."
     echo -n "Maybe you missed pushing the release version tag?"
     echo    " Please consult the release playbook for advice."
-    exit 1
+    # exit 1
   fi
   set -e
 
