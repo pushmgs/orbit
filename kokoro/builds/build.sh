@@ -49,7 +49,7 @@ if [ -n "$1" ]; then
     # Delete all unnecessary files from the src/-directory.
     # Kokoro would copy them otherwise before applying the artifacts regex
     echo "Delete all unnecessary files from the src/-directory."
-    sleep 10000;
+    
     set +e # This is allowed to fail when deleting
     if [ "${BUILD_TYPE}" == "presubmit" ]; then
       # In the presubmit case we only spare the test-results and this script.
@@ -70,18 +70,15 @@ if [ -n "$1" ]; then
     else
       # In the non-presubmit case we spare the whole build dir and this script.
       echo "Cleanup for non-presubmit."
-      find "$MOUNT_POINT" -depth -mindepth 1 | \
+	  # Delete all unneeded directories and top level files under github/orbitprofiler...
+	  find "$MOUNT_POINT" -depth -maxdepth 3 -mindepth 3 | \
         grep -v 'orbitprofiler/kokoro' | \
         grep -v 'orbitprofiler/build' | \
-        while read file; do
-          if [[ -d $file ]]; then
-            # That might give an error message when the directory is not empty.
-            # That's okay.
-            rmdir --ignore-fail-on-non-empty "$file"
-          elif [[ -e $file ]]; then
-            rm "$file"
-          fi
-        done
+		while read file; do
+		  rm -rf "$file"
+		done
+      #	... and everything from keystore.
+	  rm -rf "$KEYSTORE_PATH"
       echo "Cleanup for non-presubmit done."
     fi
   }
