@@ -53,6 +53,7 @@ if [ -n "$1" ]; then
     set +e # This is allowed to fail when deleting
     if [ "${BUILD_TYPE}" == "presubmit" ]; then
       # In the presubmit case we only spare the test-results and this script.
+	  sleep 10000;
       echo "Cleanup for presubmit."
       find "$MOUNT_POINT" -depth -mindepth 1 | \
         grep -v 'orbitprofiler/kokoro' | \
