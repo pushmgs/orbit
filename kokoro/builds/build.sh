@@ -71,6 +71,7 @@ if [ -n "$1" ]; then
     else
       # In the non-presubmit case we spare the whole build dir and this script.
       echo "Cleanup for non-presubmit."
+	  sleep 10000;
 	  # Delete all unneeded directories and top level files under github/orbitprofiler...
 	  find "$MOUNT_POINT" -depth -maxdepth 3 -mindepth 3 | \
         grep -v 'orbitprofiler/kokoro' | \
