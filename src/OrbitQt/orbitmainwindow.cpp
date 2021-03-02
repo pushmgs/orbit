@@ -8,6 +8,7 @@
 
 #include <QAction>
 #include <QApplication>
+// #include <QCandlestickSeries>
 #include <QCheckBox>
 #include <QClipboard>
 #include <QCoreApplication>
@@ -468,9 +469,11 @@ void OrbitMainWindow::SetupTargetLabel() {
   target_label_->setContentsMargins(6, 0, 0, 0);
   target_label_->setObjectName("TargetLabel");
   auto* disconnect_target_button = new QPushButton("End Session");
+  auto* ui_graph_market_data = new QPushButton("Graph Market Data");
   auto* target_layout = new QHBoxLayout();
   target_layout->addWidget(target_label_);
   target_layout->addWidget(disconnect_target_button);
+  target_layout->addWidget(ui_graph_market_data);
   target_layout->setMargin(0);
   target_widget->setLayout(target_layout);
 
