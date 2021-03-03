@@ -10,7 +10,7 @@
 
 namespace HFManager {
 
- void AddStackFrame(std::shared_ptr<HFStack>);
+ void AddStackFrame(std::shared_ptr<HFStack> stack);
  [[nodiscard]] std::shared_ptr<HFStack> PopStackFrame();
  [[nodiscard]] int GetTotalStacks() const;
  void ClearStackFrames();
