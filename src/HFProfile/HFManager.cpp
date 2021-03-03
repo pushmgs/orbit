@@ -3,7 +3,7 @@
 #include "HFManager.h"
 
 namespace HFManager {
- void AddStackFrame(std::shared_ptr<HFStack>) { stackframes.push(stack); }
+ void AddStackFrame(std::shared_ptr<HFStack> stack) { stackframes.push(stack); }
  [[nodiscard]] std::shared_ptr<HFStack> PopStackFrame() { return stackframes.pop(); }
  [[nodiscard]] int GetTotalStacks() const { return stackframes.size(); }
  
