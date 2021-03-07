@@ -24,7 +24,6 @@
 #include "TextRenderer.h"
 #include "TimeGraphLayout.h"
 #include "TimerChain.h"
-#include "TrackAccessibility.h"
 #include "TriangleToggle.h"
 #include "capture_data.pb.h"
 
@@ -33,13 +32,11 @@ class Track : public orbit_gl::CaptureViewElement, public std::enable_shared_fro
   enum Type {
     kTimerTrack,
     kThreadTrack,
-    kEventTrack,
     kFrameTrack,
     kGraphTrack,
     kGpuTrack,
     kSchedulerTrack,
     kAsyncTrack,
-    kThreadStateTrack,
     kUnknown,
   };
 
@@ -86,9 +83,8 @@ class Track : public orbit_gl::CaptureViewElement, public std::enable_shared_fro
   void SetLabel(const std::string& label) { label_ = label; }
   [[nodiscard]] const std::string& GetLabel() const { return label_; }
 
-  [[nodiscard]] Color GetBackgroundColor() const;
+  [[nodiscard]] virtual Color GetBackgroundColor() const;
 
-  void AddChild(const std::shared_ptr<Track>& track) { children_.emplace_back(track); }
   virtual void OnCollapseToggle(TriangleToggle::State state);
   [[nodiscard]] virtual bool IsCollapsible() const { return false; }
   [[nodiscard]] int32_t GetProcessId() const { return process_id_; }
@@ -99,14 +95,14 @@ class Track : public orbit_gl::CaptureViewElement, public std::enable_shared_fro
 
   [[nodiscard]] bool IsCollapsed() const { return collapse_toggle_->IsCollapsed(); }
 
-  // Accessibility
-  [[nodiscard]] const orbit_gl::AccessibleTrack* AccessibilityInterface() const {
-    return &accessibility_;
-  }
+  [[nodiscard]] virtual std::vector<CaptureViewElement*> GetVisibleChildren() { return {}; }
+  [[nodiscard]] virtual int GetVisiblePrimitiveCount() const { return 0; }
 
  protected:
   void DrawTriangleFan(Batcher* batcher, const std::vector<Vec2>& points, const Vec2& pos,
                        const Color& color, float rotation, float z);
+
+  std::unique_ptr<orbit_accessibility::AccessibleInterface> CreateAccessibleInterface() override;
 
   std::string name_;
   std::string label_;
@@ -120,10 +116,10 @@ class Track : public orbit_gl::CaptureViewElement, public std::enable_shared_fro
   std::atomic<uint64_t> min_time_;
   std::atomic<uint64_t> max_time_;
   Type type_ = kUnknown;
-  std::vector<std::shared_ptr<Track>> children_;
   std::shared_ptr<TriangleToggle> collapse_toggle_;
 
-  orbit_gl::AccessibleTrack accessibility_;
+  TimeGraphLayout* layout_;
+
   const CaptureData* capture_data_ = nullptr;
 };
 

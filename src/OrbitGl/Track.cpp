@@ -9,6 +9,7 @@
 
 #include <limits>
 
+#include "AccessibleTrack.h"
 #include "CoreMath.h"
 #include "Geometry.h"
 #include "GlCanvas.h"
@@ -22,7 +23,7 @@ Track::Track(TimeGraph* time_graph, TimeGraphLayout* layout, const CaptureData* 
       collapse_toggle_(std::make_shared<TriangleToggle>(
           TriangleToggle::State::kExpanded,
           [this](TriangleToggle::State state) { OnCollapseToggle(state); }, time_graph, layout)),
-      accessibility_(this, layout),
+      layout_(layout),
       capture_data_(capture_data) {
   const Color kDarkGrey(50, 50, 50, 255);
   color_ = kDarkGrey;
@@ -80,6 +81,10 @@ void Track::DrawTriangleFan(Batcher* batcher, const std::vector<Vec2>& points, c
     Triangle triangle(pivot, vertices[i % 2], vertices[(i + 1) % 2]);
     batcher->AddTriangle(triangle, color, shared_from_this());
   }
+}
+
+std::unique_ptr<orbit_accessibility::AccessibleInterface> Track::CreateAccessibleInterface() {
+  return std::make_unique<orbit_gl::AccessibleTrack>(this, layout_);
 }
 
 void Track::Draw(GlCanvas* canvas, PickingMode picking_mode, float z_offset) {
@@ -184,9 +189,7 @@ void Track::SetPinned(bool value) { pinned_ = value; }
 
 Color Track::GetBackgroundColor() const {
   int32_t capture_process_id = capture_data_ ? capture_data_->process_id() : -1;
-  if (GetType() == kSchedulerTrack) {
-    return color_;
-  }
+
   if (process_id_ != -1 && process_id_ != capture_process_id) {
     const Color kExternalProcessColor(30, 30, 40, 255);
     return kExternalProcessColor;

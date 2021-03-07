@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef ORBIT_GL_TRACK_ACCESSIBILITY_H_
-#define ORBIT_GL_TRACK_ACCESSIBILITY_H_
+#ifndef ORBIT_GL_ACCESSIBLE_TRACK_H_
+#define ORBIT_GL_ACCESSIBLE_TRACK_H_
 
 #include <string>
 
@@ -21,7 +21,7 @@ namespace orbit_gl {
  */
 class AccessibleTrackContent : public orbit_accessibility::AccessibleInterface {
  public:
-  AccessibleTrackContent(Track* track, TimeGraphLayout* layout) : track_(track), layout_(layout){};
+  AccessibleTrackContent(Track* track, TimeGraphLayout* layout);
 
   [[nodiscard]] int AccessibleChildCount() const override;
   [[nodiscard]] const AccessibleInterface* AccessibleChild(int /*index*/) const override;
@@ -37,6 +37,7 @@ class AccessibleTrackContent : public orbit_accessibility::AccessibleInterface {
  private:
   Track* track_;
   TimeGraphLayout* layout_;
+  std::unique_ptr<AccessibleInterface> timer_pane_;
 };
 
 /*

@@ -6,10 +6,10 @@
 
 #include <vector>
 
+#include "AccessibleTrack.h"
 #include "GlCanvas.h"
 #include "TimeGraph.h"
 #include "Track.h"
-#include "TrackAccessibility.h"
 #include "TrackManager.h"
 
 using orbit_accessibility::AccessibilityRect;
@@ -30,7 +30,9 @@ int TimeGraphAccessibility::AccessibleChildCount() const {
 }
 
 const AccessibleInterface* TimeGraphAccessibility::AccessibleChild(int index) const {
-  return time_graph_->GetTrackManager()->GetVisibleTracks()[index]->AccessibilityInterface();
+  return time_graph_->GetTrackManager()
+      ->GetVisibleTracks()[index]
+      ->GetOrCreateAccessibleInterface();
 }
 
 const AccessibleInterface* TimeGraphAccessibility::AccessibleParent() const {

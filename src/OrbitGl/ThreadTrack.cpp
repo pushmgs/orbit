@@ -40,15 +40,15 @@ ThreadTrack::ThreadTrack(TimeGraph* time_graph, TimeGraphLayout* layout, int32_t
   thread_id_ = thread_id;
   InitializeNameAndLabel(thread_id);
 
-  thread_state_track_ = std::make_shared<orbit_gl::ThreadStateTrack>(app_, time_graph, layout,
-                                                                     capture_data, thread_id_);
+  thread_state_track_ = std::make_shared<orbit_gl::ThreadStateTrack>(
+      app_, time_graph, layout, capture_data, thread_id_, this);
 
-  event_track_ =
-      std::make_shared<orbit_gl::EventTrack>(app_, time_graph, layout, capture_data, thread_id_);
+  event_track_ = std::make_shared<orbit_gl::EventTrack>(app_, time_graph, layout, capture_data,
+                                                        thread_id_, this);
   event_track_->SetThreadId(thread_id);
 
   tracepoint_track_ = std::make_shared<orbit_gl::TracepointTrack>(app_, time_graph, layout,
-                                                                  capture_data, thread_id_);
+                                                                  capture_data, thread_id_, this);
   SetTrackColor(TimeGraph::GetThreadColor(thread_id));
 }
 
@@ -60,7 +60,7 @@ void ThreadTrack::InitializeNameAndLabel(int32_t thread_id) {
     // This is the process track.
     const CaptureData& capture_data = app_->GetCaptureData();
     std::string process_name = capture_data.process_name();
-    SetName(process_name);
+    SetName("All Threads");
     const std::string_view all_threads = " (all_threads)";
     SetLabel(process_name.append(all_threads));
     SetNumberOfPrioritizedTrailingCharacters(all_threads.size() - 1);
@@ -282,6 +282,23 @@ void ThreadTrack::UpdatePrimitives(Batcher* batcher, uint64_t min_tick, uint64_t
   }
 
   TimerTrack::UpdatePrimitives(batcher, min_tick, max_tick, picking_mode, z_offset);
+}
+
+std::vector<orbit_gl::CaptureViewElement*> ThreadTrack::GetVisibleChildren() {
+  std::vector<CaptureViewElement*> result;
+  if (!thread_state_track_->IsEmpty()) {
+    result.push_back(thread_state_track_.get());
+  }
+
+  if (!event_track_->IsEmpty()) {
+    result.push_back(event_track_.get());
+  }
+
+  if (!tracepoint_track_->IsEmpty()) {
+    result.push_back(tracepoint_track_.get());
+  }
+
+  return result;
 }
 
 void ThreadTrack::SetTrackColor(Color color) {

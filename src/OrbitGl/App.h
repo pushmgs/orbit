@@ -426,10 +426,6 @@ class OrbitApp final : public DataViewFactory, public CaptureListener {
                    std::vector<uint64_t> function_hashes_to_hook,
                    std::vector<uint64_t> frame_track_function_hashes);
 
-  void RetrieveModuleFromRemote(ModuleData* module_data,
-                                std::vector<uint64_t> function_hashes_to_hook,
-                                std::vector<uint64_t> frame_track_function_hashes,
-                                std::string error_message_from_local);
   [[nodiscard]] orbit_base::Future<ErrorMessageOr<std::filesystem::path>> RetrieveModuleFromRemote(
       const std::string& module_file_path);
 
@@ -499,6 +495,8 @@ class OrbitApp final : public DataViewFactory, public CaptureListener {
 
   absl::flat_hash_map<std::string, orbit_base::Future<ErrorMessageOr<std::filesystem::path>>>
       modules_currently_loading_;
+  absl::flat_hash_map<std::string, orbit_base::Future<ErrorMessageOr<void>>>
+      symbols_currently_loading_;
 
   StringManager string_manager_;
   std::shared_ptr<grpc::Channel> grpc_channel_;

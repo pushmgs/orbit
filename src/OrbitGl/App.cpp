@@ -1116,39 +1116,6 @@ orbit_base::Future<ErrorMessageOr<std::filesystem::path>> OrbitApp::RetrieveModu
   return check_file_on_remote.Then(main_thread_executor_, std::move(download_file));
 }
 
-void OrbitApp::RetrieveModuleFromRemote(ModuleData* module_data,
-                                        std::vector<uint64_t> function_hashes_to_hook,
-                                        std::vector<uint64_t> frame_track_function_hashes,
-                                        std::string error_message_from_local) {
-  // This overload will be removed in a subsequent commit.
-  auto local_file_path = RetrieveModuleFromRemote(module_data->file_path());
-
-  auto load_symbols = [this, module_data,
-                       function_hashes_to_hook = std::move(function_hashes_to_hook),
-                       frame_track_function_hashes = std::move(frame_track_function_hashes),
-                       error_message_from_local = std::move(error_message_from_local),
-                       main_thread_executor = main_thread_executor_->weak_from_this()](
-                          const ErrorMessageOr<std::filesystem::path>& result) {
-    if (result.has_error()) {
-      SendErrorToUi(
-          "Error loading symbols",
-          absl::StrFormat("Did not find symbols locally or on remote for module \"%s\": %s\n%s",
-                          module_data->file_path(), error_message_from_local,
-                          result.error().message()));
-      modules_currently_loading_.erase(module_data->file_path());
-      return;
-    }
-
-    LoadSymbols(result.value(), module_data, function_hashes_to_hook, frame_track_function_hashes);
-  };
-
-  const auto future = local_file_path.Then(main_thread_executor_, std::move(load_symbols));
-
-  // We discard this future and don't wait for it to complete, as this was the original
-  // behaviour of this function which needs to be preserved.
-  (void)future;
-}
-
 void OrbitApp::LoadModules(
     const std::vector<ModuleData*>& modules,
     absl::flat_hash_map<std::string, std::vector<uint64_t>> function_hashes_to_hook_map,
@@ -1378,6 +1345,11 @@ void OrbitApp::AddSymbols(const std::filesystem::path& module_file_path,
 
 orbit_base::Future<ErrorMessageOr<void>> OrbitApp::LoadSymbols(
     const std::filesystem::path& symbols_path, const std::string& module_file_path) {
+  const auto it = symbols_currently_loading_.find(module_file_path);
+  if (it != symbols_currently_loading_.end()) {
+    return it->second;
+  }
+
   auto scoped_status = CreateScopedStatus(absl::StrFormat(
       R"(Loading symbols for "%s" from file "%s"...)", module_file_path, symbols_path.string()));
 
@@ -1388,6 +1360,8 @@ orbit_base::Future<ErrorMessageOr<void>> OrbitApp::LoadSymbols(
       [this, module_file_path, scoped_status = std::move(scoped_status)](
           const ErrorMessageOr<orbit_grpc_protos::ModuleSymbols>& symbols_result) mutable
       -> ErrorMessageOr<void> {
+    symbols_currently_loading_.erase(module_file_path);
+
     if (symbols_result.has_error()) return symbols_result.error();
 
     AddSymbols(module_file_path, symbols_result.value());
@@ -1400,7 +1374,9 @@ orbit_base::Future<ErrorMessageOr<void>> OrbitApp::LoadSymbols(
     return outcome::success();
   };
 
-  return load_symbols_from_file.Then(main_thread_executor_, std::move(add_symbols));
+  auto result_future = load_symbols_from_file.Then(main_thread_executor_, std::move(add_symbols));
+  symbols_currently_loading_.emplace(module_file_path, result_future);
+  return result_future;
 }
 
 void OrbitApp::LoadSymbols(const std::filesystem::path& symbols_path, ModuleData* module_data,
@@ -1854,7 +1830,7 @@ DataView* OrbitApp::GetOrCreateDataView(DataViewType type) {
 
     case DataViewType::kPresets:
       if (!presets_data_view_) {
-        presets_data_view_ = std::make_unique<PresetsDataView>(this);
+        presets_data_view_ = std::make_unique<PresetsDataView>(this, metrics_uploader_);
         panels_.push_back(presets_data_view_.get());
       }
       return presets_data_view_.get();
